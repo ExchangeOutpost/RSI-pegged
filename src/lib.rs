@@ -17,6 +17,6 @@ pub fn run(fin_data: FinData) -> FnResult<Output> {
 
     Ok(Output {
         ticker: ticker.symbol.clone(),
-        period,
+        period: period,
     })
 }
