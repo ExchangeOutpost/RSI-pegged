@@ -3,6 +3,10 @@ use crate::exchange_outpost::{Candle, FinData, schedule_email};
 use extism_pdk::{FnResult, Json, ToBytes, plugin_fn};
 use serde::Serialize;
 
+// EMA period constants for trend confirmation
+const EMA_FAST_PERIOD: usize = 50;
+const EMA_SLOW_PERIOD: usize = 200;
+
 #[derive(Serialize, ToBytes, Clone, Copy, PartialEq)]
 #[encoding(Json)]
 pub enum Signal {
@@ -375,7 +379,7 @@ pub fn run(fin_data: FinData) -> FnResult<Output> {
         .unwrap_or_default();
 
     // Ensure we have enough data
-    let min_periods = atr_period.max(200).max(pivot_lookback * 2);
+    let min_periods = atr_period.max(EMA_SLOW_PERIOD).max(pivot_lookback * 2);
     if candles.len() < min_periods {
         return Ok(Output {
             ticker: ticker.symbol.clone(),
@@ -404,8 +408,8 @@ pub fn run(fin_data: FinData) -> FnResult<Output> {
 
     // Calculate indicators
     let atr_values = calculate_atr(candles, atr_period);
-    let ema_50_values = calculate_ema(candles, 50);
-    let ema_200_values = calculate_ema(candles, 200);
+    let ema_50_values = calculate_ema(candles, EMA_FAST_PERIOD);
+    let ema_200_values = calculate_ema(candles, EMA_SLOW_PERIOD);
 
     let current_atr = atr_values[n - 1];
     let ema_50 = ema_50_values[n - 1];
