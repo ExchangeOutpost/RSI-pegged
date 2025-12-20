@@ -1,7 +1,57 @@
 {
-    "function_name": "Rust Function Template",
-    "description": "A template for creating Rust functions",
-    "financial_data_keys": [],
-    "call_arguments_schema": {},
+    "function_name": "Pivot Point SuperTrend Strategy",
+    "description": "A hybrid trading strategy combining pivot points for support/resistance identification with the SuperTrend indicator for trend direction. Includes EMA confirmation (50/200) and volume validation for breakout and trend-following trading signals.",
+    "financial_data_keys": ["symbol_data"],
+    "call_arguments_schema": {
+        "type": "object",
+        "properties": {
+            "atr_period": {
+                "type": ["integer", "string"],
+                "description": "ATR period for volatility calculation (typically 10-14)",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 14
+            },
+            "multiplier": {
+                "type": ["number", "string"],
+                "description": "ATR multiplier for SuperTrend bands (typically 2-3)",
+                "minimum": 0.5,
+                "maximum": 5.0,
+                "default": 2.0
+            },
+            "pivot_lookback": {
+                "type": ["integer", "string"],
+                "description": "Lookback period for pivot point calculation",
+                "minimum": 2,
+                "maximum": 20,
+                "default": 5
+            },
+            "volume_period": {
+                "type": ["integer", "string"],
+                "description": "Period for average volume calculation",
+                "minimum": 5,
+                "maximum": 100,
+                "default": 20
+            },
+            "volume_threshold": {
+                "type": ["number", "string"],
+                "description": "Volume threshold multiplier for confirmation (e.g., 1.5 means 50% above average)",
+                "minimum": 1.0,
+                "maximum": 5.0,
+                "default": 1.5
+            },
+            "swing_lookback": {
+                "type": ["integer", "string"],
+                "description": "Lookback period for swing high/low stop loss calculation",
+                "minimum": 5,
+                "maximum": 50,
+                "default": 20
+            },
+            "email": {
+                "type": "string",
+                "description": "Email address for signal notifications (optional)"
+            }
+        }
+    },
     "enforce_schemas": false
 }

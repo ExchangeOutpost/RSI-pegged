@@ -1,98 +1,90 @@
-# Rust Function Template for ExchangeOutpost
+# Pivot Point SuperTrend Strategy for ExchangeOutpost
 
-A baseline template for creating Rust-based financial functions that can be deployed and executed on [ExchangeOutpost](https://www.exchangeoutpost.com/).
+A Rust-based implementation of the Pivot Point SuperTrend trading strategy that can be deployed and executed on [ExchangeOutpost](https://www.exchangeoutpost.com/).
 
 ## Overview
 
-This project provides a foundational structure for developing financial analysis functions in Rust that compile to WebAssembly (WASM) and integrate seamlessly with the ExchangeOutpost platform. It includes pre-built data structures for handling financial market data, candlestick charts, and decimal precision calculations.
+This project implements a hybrid trading strategy that combines pivot points for identifying support/resistance levels with the SuperTrend indicator for trend direction. It includes EMA confirmation (50/200) and volume validation for breakout and trend-following trading signals.
+
+## Strategy Components
+
+### Pivot Points Calculation
+Calculates pivot highs and lows over a specified lookback period. The center line is derived through a weighted average of these pivot points, which serves as the baseline for the SuperTrend calculation.
+
+### SuperTrend Indicator
+Uses Average True Range (ATR) and a configurable multiplier to create dynamic bands:
+- **Upper Band**: Dynamic Center + (Multiplier × ATR)
+- **Lower Band**: Dynamic Center - (Multiplier × ATR)
+- **ATR Calculation**: Wilder's smoothing method [(Prior ATR × (period-1)) + Current TR] / period
+
+### Trend Confirmation
+Includes 50 EMA and 200 EMA as an additional trend confirmation layer:
+- Bullish alignment: Price > EMA 50 > EMA 200
+- Bearish alignment: Price < EMA 50 < EMA 200
+
+### Signal Generation
+
+**Long Entry Rules:**
+- Price closes above both moving averages
+- 50 EMA positioned above 200 EMA
+- Pivot Point SuperTrend generates a bullish signal
+- Volume confirmation: volume exceeds threshold above average
+
+**Short Entry Rules:**
+- Price closes below both moving averages
+- 50 EMA positioned below 200 EMA
+- Pivot Point SuperTrend generates a bearish signal
+- Volume confirmation at signal issuance
+
+## Configuration Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `atr_period` | integer | 14 | ATR period for volatility calculation (typically 10-14) |
+| `multiplier` | number | 2.0 | ATR multiplier for SuperTrend bands (typically 2-3) |
+| `pivot_lookback` | integer | 5 | Lookback period for pivot point calculation |
+| `volume_period` | integer | 20 | Period for average volume calculation |
+| `volume_threshold` | number | 1.5 | Volume threshold multiplier for confirmation |
+| `swing_lookback` | integer | 20 | Lookback period for swing high/low stop loss calculation |
+| `email` | string | "" | Email address for signal notifications (optional) |
+
+## Output Structure
+
+The strategy outputs the following data:
+
+```json
+{
+    "ticker": "SYMBOL",
+    "signal": "Long|Short|Hold",
+    "trend": "Bullish|Bearish|Neutral",
+    "supertrend_value": 100.50,
+    "upper_band": 102.30,
+    "lower_band": 98.70,
+    "atr": 1.80,
+    "ema_50": 101.20,
+    "ema_200": 99.80,
+    "current_price": 101.50,
+    "stop_loss": 98.50,
+    "volume_confirmed": true,
+    "email_sent": false
+}
+```
 
 ## Features
 
 - **WebAssembly Compilation**: Functions compile to WASM for cross-platform execution
 - **Financial Data Structures**: Built-in support for candlestick data, ticker information, and market data
-- **Decimal Precision**: Integrated `rust_decimal` for accurate financial calculations
-- **Extism Plugin Framework**: Uses Extism PDK for plugin development and execution
-- **Type Safety**: Strongly typed financial data structures with serde serialization support
+- **Dynamic Risk Management**: Automatic stop loss calculation based on recent swing highs/lows
+- **Email Notifications**: Optional email alerts when trading signals are generated
+- **Volume Confirmation**: Reduces false signals by requiring elevated volume
 
 ## Project Structure
 
 ```
 src/
-├── lib.rs                      # Main entry point and plugin function, edit this file to implement your function
-└── exchange_outpost/           # Contains financial data structures and utility functions, you should not edit this directory
+├── lib.rs                      # Main strategy implementation
+└── exchange_outpost/           # Financial data structures and utility functions
 ```
-
-## Function Manifest
-
-The `manifest.json` file is a configuration file that defines metadata and behavior for your function when deployed on ExchangeOutpost. This file is crucial for proper function registration and execution.
-
-### Manifest Structure
-
-```json
-{
-    "function_name": "Your Function Name",
-    "description": "A brief description of what your function does",
-    "financial_data_keys": ["symbol1", "symbol2"],
-    "call_arguments_schema": {
-        "type": "object",
-        "properties": {
-            "parameter_name": {
-                "type": ["number", "string"],
-                "description": "Parameter description"
-            }
-        }
-    },
-    "enforce_schemas": false
-}
-```
-
-### Manifest Fields
-
-- **`function_name`**: The display name for your function in the ExchangeOutpost interface
-- **`description`**: A clear description of what your function analyzes or computes
-- **`financial_data_keys`**: An array of strings specifying what are the labels for the financial data your function requires.
-- **`call_arguments_schema`**: A JSON schema defining the parameters your function accepts. This creates a user interface for function configuration
-- **`enforce_schemas`**: Boolean flag that determines whether the system should validate input against the defined schemas.
-
-### Example Configurations
-
-**Simple Moving Average Function:**
-```json
-{
-    "function_name": "Simple Moving Average",
-    "description": "Calculates simple moving average for specified periods",
-    "financial_data_keys": ["symbol_data"],
-    "call_arguments_schema": {
-        "type": "object",
-        "properties": {
-            "period": {
-                "type": ["integer", "string"],
-                "description": "Number of periods for moving average calculation",
-                "minimum": 1,
-                "maximum": 200,
-                "default": 20
-            }
-        },
-        "required": ["period"]
-    },
-    "enforce_schemas": true
-}
-```
-
-
-## Core Components
-
-### FinData
-The main data container that provides access to:
-- **Ticker Data**: Market data for multiple trading symbols
-- **Piped Data**: Additional data passed between functions
-- **Call Arguments**: Runtime parameters for function execution
-
-### Candle
-Represents financial candlestick data with:
-- Timestamp (Unix epoch)
-- OHLCV data (Open, High, Low, Close, Volume)
-- Support for both `f64` and `Decimal` precision
 
 ## Getting Started
 
@@ -105,8 +97,8 @@ Represents financial candlestick data with:
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/ExchangeOutpost/rust-function-template.git
-cd rust-function-template
+git clone https://github.com/ExchangeOutpost/RSI-pegged.git
+cd RSI-pegged
 ```
 
 2. Install the WebAssembly target:
@@ -119,93 +111,6 @@ rustup target add wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
 ```
 
-## Development
-
-### Creating Your Function
-
-The main entry point is in `src/lib.rs`. Modify the `run` function to implement your financial analysis logic:
-
-```rust
-#[plugin_fn]
-pub fn run(fin_data: FinData) -> FnResult<Output> {
-    // Access ticker data
-    let labels = fin_data.get_labels();
-    
-    // Get candlestick data for a specific symbol
-    let candles = fin_data.get_candles("symbol_data")?;
-    
-    // Use decimal precision for calculations
-    let decimal_candles = fin_data.get_candles_decimal("symbol_data")?;
-    
-    // Your analysis logic here
-    
-    Ok(Output {
-        // Return your results
-    })
-}
-```
-
-### Working with Financial Data
-
-```rust
-// Get available ticker symbols
-let symbols = fin_data.get_labels();
-
-// Access candlestick data
-let candles = fin_data.get_candles("symbol_data")?;
-for candle in candles {
-    println!("Close price: {}", candle.close);
-}
-
-// Use decimal precision for accurate calculations
-let decimal_candles = fin_data.get_candles_decimal("symbol_data")?;
-
-// Access piped data from other functions (usage of this is discouraged)
-let pipe_sources = fin_data.get_pipe_sources();
-let data = fin_data.get_data_from_pipe("previous_analysis")?;
-
-// Get function call arguments
-let args = fin_data.get_call_arguments();
-```
-
-### Output Structure
-
-Define your output structure by modifying the `Output` struct:
-
-```rust
-#[derive(Serialize, ToBytes)]
-#[encoding(Json)]
-pub struct Output {
-    pub result: f64,
-    pub signal: String,
-    pub confidence: f64,
-    // Add your fields here
-}
-```
-
-### Sending webhooks 
-
-You can send webhooks to external services by using the `schedule_webhook` function:
-
-```rust
-use crate::exchange_outpost::schedule_webhook;
-
-schedule_webhook("/webhook", payload);
-```
-This will send a POST request to the specified webhook URL with the given payload. The base url will be set to the one you configured for webhooks in your Organization settings.
-
-### Sending emails
-
-You can send email notifications by using the `schedule_email` function:
-
-```rust
-use crate::exchange_outpost::schedule_email;
-
-let email_body = "Alert: Price threshold reached!";
-schedule_email("user@example.com", email_body);
-```
-This will send an email to the specified email address with the given body content.
-
 ## Building and Deployment
 
 ### Local Build
@@ -215,7 +120,7 @@ cargo build --target wasm32-unknown-unknown --release
 ```
 
 The compiled WASM file will be located at:
-`target/wasm32-unknown-unknown/release/rust-function-template.wasm`
+`target/wasm32-unknown-unknown/release/rust_function_template.wasm`
 
 ### Automated Releases
 
@@ -237,23 +142,14 @@ You can use this release to test your function on the ExchangeOutpost platform.
 
 ## Dependencies
 
-- **extism-pdk** (1.4.0): Plugin development kit for WebAssembly functions
-- **rust_decimal** (1.37.1): High-precision decimal arithmetic for financial calculations
+- **extism-pdk** (1.4.1): Plugin development kit for WebAssembly functions
+- **rust_decimal** (1.37.2): High-precision decimal arithmetic for financial calculations
 - **serde** (1.0.219): Serialization/deserialization framework
-- **serde_json** (1.0.140): JSON support for serde
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -m 'Add new feature'`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Open a Pull Request
+- **serde_json** (1.0.143): JSON support for serde
 
 ## License
 
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for more details.
-
 
 ## Related Links
 
