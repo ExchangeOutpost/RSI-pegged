@@ -1,5 +1,4 @@
-mod exchange_outpost;
-use crate::exchange_outpost::FinData;
+use exchange_outpost_abi::FunctionArgs;
 use extism_pdk::{FnResult, Json, ToBytes, encoding, plugin_fn};
 use serde::Serialize;
 
@@ -8,6 +7,6 @@ use serde::Serialize;
 pub struct Output {}
 
 #[plugin_fn]
-pub fn run(fin_data: FinData) -> FnResult<Output> {
+pub fn run(call_args: FunctionArgs) -> FnResult<Output> {
     Ok(Output {})
 }
