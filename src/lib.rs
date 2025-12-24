@@ -1,5 +1,4 @@
-mod exchange_outpost;
-use crate::exchange_outpost::{FinData, schedule_email};
+use exchange_outpost_abi::FunctionArgs;
 use extism_pdk::{FnResult, Json, ToBytes, encoding, plugin_fn};
 use serde::Serialize;
 use ta::{Next, indicators::RelativeStrengthIndex};

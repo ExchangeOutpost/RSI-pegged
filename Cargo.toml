@@ -6,9 +6,12 @@ edition = "2024"
 [lib]
 crate-type = ["cdylib"]
 
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+
 [dependencies]
-extism-pdk = "1.4.1"
+extism-pdk = "1.4"
 rust_decimal = "1.37.2"
 serde = "1.0.219"
 serde_json = "1.0.143"
-ta = "0.5.0"
+exchange_outpost_abi = { git = "https://github.com/ExchangeOutpost/exchange-outpost-abi", tag = "0.1.1"}ta = "0.5.0"
