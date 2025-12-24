@@ -1,4 +1,4 @@
-use exchange_outpost_abi::FunctionArgs;
+use exchange_outpost_abi::{FunctionArgs, schedule_email};
 use extism_pdk::{FnResult, Json, ToBytes, encoding, plugin_fn};
 use serde::Serialize;
 use ta::{Next, indicators::RelativeStrengthIndex};
@@ -13,14 +13,16 @@ pub struct Output {
 }
 
 #[plugin_fn]
-pub fn run(fin_data: FinData) -> FnResult<Output> {
-    let ticker = fin_data.get_ticker("pegged_data")?;
-    let period = fin_data.get_call_argument::<usize>("period").unwrap_or(14);
-    let rsi_low = fin_data.get_call_argument::<f64>("rsi_low").unwrap_or(20.0);
-    let rsi_high = fin_data
+pub fn run(call_args: FunctionArgs) -> FnResult<Output> {
+    let ticker = call_args.get_ticker("pegged_data")?;
+    let period = call_args.get_call_argument::<usize>("period").unwrap_or(14);
+    let rsi_low = call_args
+        .get_call_argument::<f64>("rsi_low")
+        .unwrap_or(20.0);
+    let rsi_high = call_args
         .get_call_argument::<f64>("rsi_high")
         .unwrap_or(70.0);
-    let email = fin_data
+    let email = call_args
         .get_call_argument::<String>("email")
         .unwrap_or("".to_string());
     let mut rsi = RelativeStrengthIndex::new(period).unwrap();
